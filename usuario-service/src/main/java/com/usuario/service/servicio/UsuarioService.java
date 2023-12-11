@@ -1,0 +1,97 @@
+package com.usuario.service.servicio;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+
+import com.usuario.service.entidades.Usuario;
+import com.usuario.service.feignsClients.CarroFeignClients;
+import com.usuario.service.feignsClients.MotoFeignClients;
+import com.usuario.service.modelos.Carro;
+import com.usuario.service.modelos.Moto;
+import com.usuario.service.repositorio.UsuarioRepository;
+
+@Service
+public class UsuarioService {
+
+	@Autowired
+	private CarroFeignClients carroFeignClients;
+	@Autowired
+	private MotoFeignClients motoFeignClients;
+
+	@Autowired
+	private RestTemplate restTemplate;
+
+	@Autowired
+	private UsuarioRepository repository;
+
+	public List<Carro> getCarros(int usuarioId) {
+		List<Carro> carros = restTemplate.getForObject("http://localhost:8082/carros/usuario/" + usuarioId, List.class);
+		return carros;
+	}
+
+	public List<Moto> getMotos(int usuarioId) {
+		List<Moto> motos = restTemplate.getForObject("http://localhost:8083/motos/usuario/" + usuarioId, List.class);
+		return motos;
+	}
+
+	public Carro saveCarro(int usuarioId, Carro carro) {
+		carro.setUsuarioId(usuarioId);
+		Carro nuevoCarro = carroFeignClients.save(carro);
+		return nuevoCarro;
+	}
+
+	public Moto saveMoto(int usuarioId, Moto moto) {
+		moto.setUsuarioId(usuarioId);
+		Moto nuevaMoto = motoFeignClients.saveMoto(moto);
+		return nuevaMoto;
+	}
+
+	public Map<String, Object> getUsuariosAndVehiculos(int usuarioId) {
+
+		Map<String, Object> resultado = new HashMap<>();
+		Usuario usuario = repository.findById(usuarioId).orElse(null);
+		if (usuario == null) {
+			resultado.put("mensaje","El usuario no éxiste");
+			return resultado;
+		}
+		resultado.put("Usuario", usuario);
+
+		List<Carro> carros = carroFeignClients.getCarros(usuarioId);
+		// isEmpty es vacia
+		if (carros.isEmpty()) {
+			resultado.put("Carros","El usuario no tiene carros");
+		} else {
+			resultado.put("Carros", carros);
+		}
+
+		List<Moto> motos = motoFeignClients.getMotos(usuarioId);
+		if (motos.isEmpty()) {
+			resultado.put("Motos","El usuario no tiene motos");
+		} else {
+			resultado.put("Motos", motos);
+		}
+		return resultado;
+	}
+
+	@Transactional(readOnly = true)
+	public List<Usuario> getAll() {
+		return repository.findAll();
+	}
+
+	@Transactional(readOnly = true)
+	public Usuario getUsuarioById(int id) {
+		return repository.findById(id).orElse(null);
+	}
+
+	@Transactional
+	public Usuario save(Usuario usuario) {
+		Usuario nuevoUsuario = repository.save(usuario);
+		return nuevoUsuario;
+	}
+}

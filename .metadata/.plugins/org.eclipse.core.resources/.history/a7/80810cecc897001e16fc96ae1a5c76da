@@ -1,0 +1,13 @@
+package com.usuario.service.feignsClients;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@FeignClient(name = "carro-service",url = "http://localhost:8082")
+@RequestMapping()
+public interface CarroFeignClients {
+
+	//podemos acceder a los metodos http
+	
+	
+}

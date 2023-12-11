@@ -1,0 +1,5 @@
+package com.usuario.service.feignsClients;
+
+public interface MotoFeignClients {
+
+}
